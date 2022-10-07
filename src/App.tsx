@@ -1,34 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+import useScrollSpy from "./hooks/useScrollSpy";
+
+const elementIds: string[] = [
+  "element-a",
+  "element-b",
+  "element-c",
+  "element-d",
+];
 
 function App() {
-  const [count, setCount] = useState(0)
+  useScrollSpy({
+    ids: elementIds,
+    offset: 48,
+  });
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="main">
+      <div className="navbar">
+        <ul>
+          {elementIds.map((el) => (
+            <li key={el}>{el}</li>
+          ))}
+        </ul>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {elementIds.map((el) => (
+        <section className="element" id={el} key={el}>
+          {el}
+        </section>
+      ))}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
