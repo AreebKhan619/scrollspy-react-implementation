@@ -27,3 +27,11 @@ body {
   display: flex;
   gap: 3rem;
 }
+
+.navbar ul li.list-item.selected {
+  font-weight: bold;
+}
+
+.element.active {
+  background-color: lightgreen;
+}

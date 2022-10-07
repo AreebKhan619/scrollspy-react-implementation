@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 interface ScrollSpyOnlyIds extends ScrollSpyBasics {
   ids?: never;
@@ -17,7 +17,7 @@ interface ScrollSpyBasics {
 type ScrollSpyOptions = ScrollSpyOnlyIds | ScrollSpyOnlyRefs;
 
 const useScrollSpy = (options: ScrollSpyOptions) => {
-  const lastActiveRef = useRef<string>();
+  const [inFocus, setInFocus] = useState<string>();
 
   useLayoutEffect(() => {
     let positions: number[];
@@ -38,17 +38,15 @@ const useScrollSpy = (options: ScrollSpyOptions) => {
           (position) =>
             (position || 0) > currentScrollPosition - (options.offset || 0)
         );
-        if (lastActiveRef.current !== options.ids[firstMatchIdx]) {
-          if (lastActiveRef.current) {
-            document.getElementById(lastActiveRef.current)!.className = document
-              .getElementById(lastActiveRef.current)!
+        if (inFocus !== options.ids[firstMatchIdx]) {
+          if (inFocus) {
+            document.getElementById(inFocus)!.className = document
+              .getElementById(inFocus)!
               .className.replace(" active", "");
           }
-
-          lastActiveRef.current = options.ids[firstMatchIdx];
-          document.getElementById(lastActiveRef.current)!.className +=
+          setInFocus(options.ids[firstMatchIdx]);
+          document.getElementById(options.ids[firstMatchIdx])!.className +=
             " active";
-          console.log(options.ids[firstMatchIdx]);
         }
       }
     };
@@ -57,7 +55,9 @@ const useScrollSpy = (options: ScrollSpyOptions) => {
 
     window.addEventListener("scroll", onScrollListener);
     return () => window.removeEventListener("scroll", onScrollListener);
-  }, []);
+  }, [inFocus]);
+
+  return { inFocus };
 };
 
 export default useScrollSpy;

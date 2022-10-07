@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import "./App.css";
-import useScrollSpy from "./hooks/useScrollSpy";
+import ScrollSpyContainer from "./components/ScrollSpyContainer";
 
 const elementIds: string[] = [
   "element-a",
@@ -10,18 +9,17 @@ const elementIds: string[] = [
 ];
 
 function App() {
-  useScrollSpy({
-    ids: elementIds,
-    offset: 48,
-  });
-
   return (
     <div className="main">
       <div className="navbar">
         <ul>
-          {elementIds.map((el) => (
-            <li key={el}>{el}</li>
-          ))}
+          <ScrollSpyContainer elementIds={elementIds}>
+            {elementIds.map((el) => (
+              <li aria-label={el} className="list-item" key={el}>
+                {el}
+              </li>
+            ))}
+          </ScrollSpyContainer>
         </ul>
       </div>
       {elementIds.map((el) => (
