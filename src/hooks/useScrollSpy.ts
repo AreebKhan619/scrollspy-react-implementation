@@ -12,17 +12,27 @@ interface ScrollSpyOnlyRefs extends ScrollSpyBasics {
 
 interface ScrollSpyBasics {
   offset?: number;
+  triggerInitially?: boolean;
+  percentVisibility?: number;
+}
+
+interface IndicesRef {
+  previous: number | null;
+  next: number | null;
 }
 
 type ScrollSpyOptions = ScrollSpyOnlyIds | ScrollSpyOnlyRefs;
 
 const useScrollSpy = (options: ScrollSpyOptions) => {
-  const [inFocus, setInFocus] = useState<string>();
+  const positionsRef = useRef<number[]>([]);
+  const [indexInFocus, setIndexInFocus] = useState<number | null>(null);
+  const indicesRef = useRef<IndicesRef>({ previous: null, next: null });
+  const { previous, next } = indicesRef.current;
+  const { current: positions } = positionsRef;
 
   useLayoutEffect(() => {
-    let positions: number[];
     if (options.ids) {
-      positions = options.ids.reduce((posArr, id) => {
+      positionsRef.current = options.ids.reduce((posArr, id) => {
         const offsetTop = document.getElementById(id)?.offsetTop;
         if (offsetTop !== undefined) posArr.push(offsetTop);
         return posArr;
@@ -30,23 +40,54 @@ const useScrollSpy = (options: ScrollSpyOptions) => {
     } else if (options.refs) {
       console.log(options.refs);
     }
+  }, []);
+
+  const onUpdate = (focusUpdateIdx: number) => {
+    if (!options.ids) return;
+    if (indexInFocus !== null) {
+      let elClassName = document.getElementById(
+        options.ids[indexInFocus]
+      )!.className;
+      elClassName = elClassName.replace(" active", "");
+    }
+    document.getElementById(options.ids[focusUpdateIdx])!.className +=
+      " active";
+  };
+
+  useLayoutEffect(() => {
+    const positions = positionsRef.current; // value received properly
 
     const onScrollListener = (e: any) => {
       if (options.ids) {
-        const currentScrollPosition = window.scrollY;
-        const firstMatchIdx = positions.findIndex(
-          (position) =>
-            (position || 0) > currentScrollPosition - (options.offset || 0)
-        );
-        if (inFocus !== options.ids[firstMatchIdx]) {
-          if (inFocus) {
-            document.getElementById(inFocus)!.className = document
-              .getElementById(inFocus)!
-              .className.replace(" active", "");
+        const adjustedScrollPosition = window.scrollY + (options.offset || 0);
+
+        if (indexInFocus !== null) {
+          // check if the user is going down
+          if (
+            adjustedScrollPosition >= positions[indexInFocus] &&
+            next &&
+            // adjustedScrollPosition >= positions[next]
+            adjustedScrollPosition >= positions[next]
+          ) {
+            console.log("user is scrolling down");
+            indicesRef.current.previous = indexInFocus;
+            setIndexInFocus(next);
+            indicesRef.current.next = next + 1;
           }
-          setInFocus(options.ids[firstMatchIdx]);
-          document.getElementById(options.ids[firstMatchIdx])!.className +=
-            " active";
+          // check if the user is scrolling up
+          else if (
+            adjustedScrollPosition <= positions[indexInFocus] &&
+            adjustedScrollPosition <= positions[previous ?? indexInFocus - 1]
+          ) {
+            console.log("user is scrolling up");
+            setIndexInFocus(previous);
+            indicesRef.current.previous = (previous ?? indexInFocus - 1) - 1;
+            indicesRef.current.next = indexInFocus;
+          }
+        } else {
+          indicesRef.current.previous = null;
+          setIndexInFocus(0);
+          indicesRef.current.next = 1;
         }
       }
     };
@@ -55,9 +96,9 @@ const useScrollSpy = (options: ScrollSpyOptions) => {
 
     window.addEventListener("scroll", onScrollListener);
     return () => window.removeEventListener("scroll", onScrollListener);
-  }, [inFocus]);
+  }, [indexInFocus]);
 
-  return { inFocus };
+  return { inFocus: options.ids?.[indexInFocus || 0] || "" };
 };
 
 export default useScrollSpy;
